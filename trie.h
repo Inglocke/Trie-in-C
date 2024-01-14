@@ -59,7 +59,7 @@ void insertLinesFromFile(TrieNode *root, const char *filePath);
 
 TrieNode * getLastNodeInWord(TrieNode * root, const char *word);
 
-void serializeTrie(FILE* file, TrieNode* node);
+void serializeTrie(TrieNode* root, FILE* file);
 
 TrieNode* deserializeTrie(FILE* file);
 

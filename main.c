@@ -2,12 +2,12 @@
 #include "trie.h"
 
 int main() {
-    TrieNode * root;
+    TrieNode * root = createNode();
     //insertLinesFromFile(root, "../words.txt");
     insert(root, "the");
-    FILE *file = fopen("../trieSave.txt", "r");
-   // serializeTrie(file,root);
+    FILE *file = fopen("../trieSave.txt", "w");
+    serializeTrie(root,file);
     root = deserializeTrie(file);
-    printf("%i\n", search(root,"the"));
+    //printf("%i\n", search(root,"faggot"));
     return 0;
 }

@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#define NULL_MARKER ((TrieNode*)1)
 
 TrieNode *createNode(void){
     TrieNode * retNode = malloc(sizeof(TrieNode));
@@ -28,11 +28,13 @@ void insert(TrieNode *root, const char *word){
 }
 
 
-
 // Function to search for a word in the Trie
 
 bool search(TrieNode *root, const char *word){
-    return getLastNodeInWord(root, word)->is_end_of_word;
+    TrieNode * lastNode = getLastNodeInWord(root, word);
+    if(lastNode == NULL)
+        return false;
+    return lastNode->is_end_of_word;
 }
 
 
@@ -53,7 +55,7 @@ TrieNode * getLastNodeInWord(TrieNode * root, const char *word){
     TrieNode * curNode = root;
     for (int i = 0; i < strlen(word); ++i) {
         if(curNode->children[word[i]] == NULL){
-            return false;
+            return NULL;
         }
         curNode = curNode->children[word[i]];
     }
@@ -98,44 +100,37 @@ void insertLinesFromFile(TrieNode *root, const char *filePath) {
     fclose(file);
 }
 
-void serializeTrie(FILE* file, TrieNode* node) {
-    if (node == NULL) {
-        fwrite("#", sizeof(char), 1, file);
+void serializeTrie(TrieNode* root, FILE* file) {
+    if (root == NULL) {
+        // Write a marker to indicate that the node is NULL
+        fwrite(NULL_MARKER, sizeof(TrieNode), 1, file);
         return;
     }
 
-    fwrite("N", sizeof(char), 1, file);
+    fwrite(root, sizeof(TrieNode), 1, file);
 
-    for (int i = 0; i < 256; i++) {
-        serializeTrie(file, node->children[i]);
+    for (int i = 0; i < 256; ++i) {
+        serializeTrie(root->children[i], file);
     }
 }
 
 TrieNode* deserializeTrie(FILE* file) {
-    char marker;
-    fread(&marker, sizeof(char), 1, file);
+    TrieNode* root = malloc(sizeof(TrieNode));
+    fread(root, sizeof(TrieNode), 1, file);
 
-    if (marker == '#') {
-        // NULL node marker
-        return NULL;
-    } else if (marker == 'N') {
-        // Valid node marker
-
-        // Create a new trie node
-        TrieNode* newNode = createNode();
-
-        // Read node data (if any)
-        // Example: fread(&(newNode->someData), sizeof(int), 1, file);
-
-        // Recursively deserialize child nodes
-        for (int i = 0; i < 256; i++) {
-            newNode->children[i] = deserializeTrie(file);
-        }
-
-        return newNode;
-    } else {
-        // Handle unrecognized marker (error case)
-        fprintf(stderr, "Error: Unrecognized marker '%c'\n", marker);
+    // Check for the NULL marker
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress"
+    if (root == NULL_MARKER) {
+        free(root);  // Free the memory allocated for the marker
         return NULL;
     }
+#pragma GCC diagnostic pop
+
+
+    for (int i = 0; i < 256; ++i) {
+        root->children[i] = deserializeTrie(file);
+    }
+
+    return root;
 }
